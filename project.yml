@@ -1,0 +1,49 @@
+name: MFC
+options:
+  minimumXcodeGenVersion: 2.39.0
+packages:
+  SharedModels:
+    path: packages/SharedModels
+  ControlCore:
+    path: packages/ControlCore
+  RemoteProtocol:
+    path: packages/RemoteProtocol
+  SMCBridge:
+    path: packages/SMCBridge
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+targets:
+  MacFanControl:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: apps/MacFanControl/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.visualog.mfc.mac
+        PRODUCT_NAME: MacFanControl
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+    dependencies:
+      - package: SharedModels
+      - package: ControlCore
+      - package: RemoteProtocol
+      - package: SMCBridge
+  iPhoneRemote:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: apps/iPhoneRemote/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.visualog.mfc.ios
+        PRODUCT_NAME: iPhoneRemote
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - package: SharedModels
+      - package: RemoteProtocol
