@@ -28,6 +28,8 @@ struct MacDashboardView: View {
                     snapshot: controller.snapshot
                 )
 
+                MacControlLoopSection(summary: controller.controlLoopSummary)
+
                 MacServerSection(server: controller.remoteServer)
 
                 MacPairingSection(pairedDevices: controller.remoteServer.pairedDevices)
@@ -39,6 +41,7 @@ struct MacDashboardView: View {
             controller.startRemoteServices()
             controller.refreshFromHardwareIfAvailable()
             controller.publishPreviewTelemetry()
+            controller.startControlLoop()
         }
     }
 }
@@ -186,6 +189,24 @@ private struct MacCommandSection: View {
                     value: snapshot.isClamshellMode ? "On" : "Off"
                 )
             }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 20))
+    }
+}
+
+private struct MacControlLoopSection: View {
+    let summary: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Control Loop")
+                .font(.title3.weight(.semibold))
+
+            Text(summary)
+                .font(.body)
+                .foregroundStyle(.secondary)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)

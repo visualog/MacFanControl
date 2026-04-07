@@ -11,7 +11,7 @@
 
 1. `SMCBridge` reads sensors, fan limits, and current fan speeds.
 2. `ControlCore` converts sensor snapshots into a bounded command.
-3. The Mac app presents state locally and exposes a paired remote API.
+3. The Mac app runs a periodic control loop, presents state locally, and exposes a paired remote API.
 4. The iPhone app reads telemetry and submits profile or curve requests.
 5. The Mac validates every remote request before applying it.
 

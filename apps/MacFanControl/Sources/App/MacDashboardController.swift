@@ -17,6 +17,9 @@ final class MacDashboardController {
     var snapshot: SensorSnapshot
     var safetyStatus: SafetyStatus
     var lastCommandSummary: String
+    var controlLoopSummary: String
+
+    private var controlTask: Task<Void, Never>?
 
     init(
         modelDescriptor: MacModelDescriptor,
@@ -27,7 +30,8 @@ final class MacDashboardController {
         mode: DeviceMode,
         snapshot: SensorSnapshot,
         safetyStatus: SafetyStatus,
-        lastCommandSummary: String
+        lastCommandSummary: String,
+        controlLoopSummary: String
     ) {
         self.modelDescriptor = modelDescriptor
         self.availableProfiles = availableProfiles
@@ -38,6 +42,7 @@ final class MacDashboardController {
         self.snapshot = snapshot
         self.safetyStatus = safetyStatus
         self.lastCommandSummary = lastCommandSummary
+        self.controlLoopSummary = controlLoopSummary
     }
 
     var deviceStatus: DeviceStatus {
@@ -72,6 +77,22 @@ final class MacDashboardController {
         }
     }
 
+    func startControlLoop() {
+        guard controlTask == nil else { return }
+
+        controlTask = Task { [weak self] in
+            while let self, !Task.isCancelled {
+                await self.runControlTick()
+                try? await Task.sleep(for: .seconds(3))
+            }
+        }
+    }
+
+    func stopControlLoop() {
+        controlTask?.cancel()
+        controlTask = nil
+    }
+
     func bindLocalNetworkServer() {
         localNetworkServer = MacLocalNetworkServer(
             listenPort: LocalTransport.defaultPort,
@@ -88,6 +109,44 @@ final class MacDashboardController {
                 )
             }
         )
+    }
+
+    func runControlTick() {
+        guard let latestSnapshot = hardwareRuntime.loadSnapshot() else {
+            mode = .fallback
+            safetyStatus = SafetyStatus(
+                isEmergencyOverrideActive: false,
+                reason: hardwareRuntime.lastHardwareError ?? "snapshot unavailable"
+            )
+            controlLoopSummary = "Snapshot read failed. Reverting toward safe fallback."
+            _ = hardwareRuntime.revertAllFansToAuto()
+            publishPreviewTelemetry()
+            return
+        }
+
+        snapshot = latestSnapshot
+
+        let fanCapabilities = modelDescriptor.fanCapabilities
+        let minimumRPM = fanCapabilities.map(\.minimumRPM).min() ?? 1800
+        let maximumRPM = fanCapabilities.map(\.maximumRPM).max() ?? 5500
+        let previousTarget = snapshot.fans.compactMap(\.targetRPM).max()
+
+        let engine = ControlEngine(
+            limits: .init(
+                minimumRPM: minimumRPM,
+                maximumRPM: maximumRPM,
+                emergencyTemperatureCelsius: 95
+            )
+        )
+
+        let decision = engine.decide(
+            snapshot: latestSnapshot,
+            profile: activeProfile,
+            previousTargetRPM: previousTarget
+        )
+
+        apply(decision: decision)
+        publishPreviewTelemetry()
     }
 
     func applyProfile(_ kind: ProfileKind) -> ValidationResponse {
@@ -116,12 +175,40 @@ final class MacDashboardController {
             isClamshellMode: snapshot.isClamshellMode
         )
         lastCommandSummary = "\(profile.name) profile accepted from remote client and queued for thermal control."
+        controlLoopSummary = "\(profile.name) profile selected. Awaiting next control tick."
         publishPreviewTelemetry()
 
         return ValidationResponse(
             accepted: true,
             reason: "\(profile.name) applied on the Mac and republished to paired clients."
         )
+    }
+
+    private func apply(decision: ControlDecision) {
+        safetyStatus = decision.status
+
+        switch decision.command {
+        case .keepCurrent(let reason):
+            controlLoopSummary = reason
+        case .setRPM(let rpm, let reason):
+            let applied = hardwareRuntime.applyTargetRPM(rpm)
+            mode = .profile
+            controlLoopSummary = applied
+                ? "Applied \(rpm) RPM. \(reason)"
+                : "Failed to apply \(rpm) RPM. \(hardwareRuntime.lastHardwareError ?? reason)"
+        case .revertToAuto(let reason):
+            let reverted = hardwareRuntime.revertAllFansToAuto()
+            mode = .systemAuto
+            controlLoopSummary = reverted
+                ? "Returned fans to automatic control. \(reason)"
+                : "Failed to return fans to auto. \(hardwareRuntime.lastHardwareError ?? reason)"
+        case .emergency(let rpm, let reason):
+            let applied = hardwareRuntime.applyTargetRPM(rpm)
+            mode = .emergencyOverride
+            controlLoopSummary = applied
+                ? "Emergency override at \(rpm) RPM. \(reason)"
+                : "Emergency override failed. \(hardwareRuntime.lastHardwareError ?? reason)"
+        }
     }
 
     private static var fallbackStatus: DeviceStatus {
@@ -219,7 +306,8 @@ extension MacDashboardController {
             mode: .profile,
             snapshot: snapshot,
             safetyStatus: safety,
-            lastCommandSummary: "Balanced profile requests 3000 RPM from CPU/GPU thermal curve."
+            lastCommandSummary: "Balanced profile requests 3000 RPM from CPU/GPU thermal curve.",
+            controlLoopSummary: "Control loop idle."
         )
         controller.bindLocalNetworkServer()
         return controller

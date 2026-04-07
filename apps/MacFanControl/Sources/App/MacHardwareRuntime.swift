@@ -11,6 +11,7 @@ final class MacHardwareRuntime {
 
     let sourceKind: SourceKind
     let thermalService: ThermalHardwareService
+    var lastHardwareError: String?
 
     init(sourceKind: SourceKind, thermalService: ThermalHardwareService) {
         self.sourceKind = sourceKind
@@ -18,11 +19,43 @@ final class MacHardwareRuntime {
     }
 
     func loadDescriptor() -> MacModelDescriptor? {
-        try? thermalService.loadDescriptor()
+        do {
+            return try thermalService.loadDescriptor()
+        } catch {
+            lastHardwareError = error.localizedDescription
+            return nil
+        }
     }
 
     func loadSnapshot() -> SensorSnapshot? {
-        try? thermalService.loadSnapshot()
+        do {
+            return try thermalService.loadSnapshot()
+        } catch {
+            lastHardwareError = error.localizedDescription
+            return nil
+        }
+    }
+
+    func applyTargetRPM(_ rpm: Int) -> Bool {
+        do {
+            try thermalService.applyTargetRPM(rpm)
+            lastHardwareError = nil
+            return true
+        } catch {
+            lastHardwareError = error.localizedDescription
+            return false
+        }
+    }
+
+    func revertAllFansToAuto() -> Bool {
+        do {
+            try thermalService.revertAllFansToAuto()
+            lastHardwareError = nil
+            return true
+        } catch {
+            lastHardwareError = error.localizedDescription
+            return false
+        }
     }
 
     static func previewRuntime() -> MacHardwareRuntime {
