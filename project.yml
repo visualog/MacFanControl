@@ -78,6 +78,11 @@ targets:
         PRODUCT_NAME: iPhoneRemote
         CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: YES
+      configs:
+        Debug:
+          CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]: NO
+          CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]: NO
+          CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: ""
     dependencies:
       - package: SharedModels
       - package: RemoteProtocol
