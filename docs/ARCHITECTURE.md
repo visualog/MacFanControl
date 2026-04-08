@@ -6,6 +6,8 @@
 - The iPhone can request changes but cannot bypass safety policy.
 - SMC access is isolated behind a dedicated bridge that can later move into a
   privileged helper if required.
+- The app now supports either an in-process helper or a separate helper process
+  behind the same `FanControlHelping` boundary.
 
 ## Runtime flow
 
@@ -55,3 +57,5 @@
   control-loop status to make real-device validation safer.
 - The app now keeps runtime logs and routes hardware operations through a helper
   boundary so the direct implementation can later be replaced by a privileged helper.
+- A dedicated `MacFanControlHelper` tool now owns the first IPC scaffold for
+  descriptor reads, snapshot reads, RPM writes, and auto-mode reverts.

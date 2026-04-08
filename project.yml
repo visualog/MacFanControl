@@ -26,6 +26,12 @@ schemes:
         iPhoneRemote: all
     run:
       config: Debug
+  MacFanControlHelper:
+    build:
+      targets:
+        MacFanControlHelper: all
+    run:
+      config: Debug
 targets:
   MacFanControl:
     type: application
@@ -33,6 +39,7 @@ targets:
     deploymentTarget: "14.0"
     sources:
       - path: apps/MacFanControl/Sources
+      - path: apps/Support/HelperIPC
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.visualog.mfc.mac
@@ -44,6 +51,20 @@ targets:
       - package: SharedModels
       - package: ControlCore
       - package: RemoteProtocol
+      - package: SMCBridge
+  MacFanControlHelper:
+    type: tool
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: apps/MacFanControlHelper/Sources
+      - path: apps/Support/HelperIPC
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.visualog.mfc.helper
+        PRODUCT_NAME: MacFanControlHelper
+    dependencies:
+      - package: SharedModels
       - package: SMCBridge
   iPhoneRemote:
     type: application

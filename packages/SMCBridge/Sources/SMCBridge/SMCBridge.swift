@@ -1,7 +1,7 @@
 import Foundation
 import SharedModels
 
-public struct FanCapability: Sendable, Hashable {
+public struct FanCapability: Sendable, Hashable, Codable {
     public let id: Int
     public let minimumRPM: Int
     public let maximumRPM: Int
@@ -13,7 +13,7 @@ public struct FanCapability: Sendable, Hashable {
     }
 }
 
-public struct MacModelDescriptor: Sendable, Hashable {
+public struct MacModelDescriptor: Sendable, Hashable, Codable {
     public let identifier: String
     public let fanCapabilities: [FanCapability]
 

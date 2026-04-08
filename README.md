@@ -16,6 +16,7 @@ system can be designed and tested before building full app targets.
 - `packages/ControlCore`: thermal control engine and policy logic
 - `packages/RemoteProtocol`: API and WebSocket message contracts
 - `packages/SMCBridge`: low-level SMC abstractions and mockable interfaces
+- `apps/MacFanControlHelper`: macOS helper tool scaffold for future privileged separation
 - `docs/ARCHITECTURE.md`: system design notes
 
 ## Suggested next steps
@@ -38,3 +39,7 @@ system can be designed and tested before building full app targets.
   is the real IOKit call path, key validation, and privileged helper strategy.
 - Set `MFC_USE_INTEL_SMC=1` in the macOS app scheme environment to force the
   Intel runtime path instead of the preview mock runtime.
+- Set `MFC_USE_HELPER_PROCESS=1` to make the macOS app talk to the separate
+  `MacFanControlHelper` process instead of the in-process helper.
+- Use `MFC_HELPER_PATH` when you want the app to launch a specific helper
+  executable during local development.

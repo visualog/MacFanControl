@@ -83,7 +83,7 @@ final class MacDashboardController {
     }
 
     func refreshFromHardwareIfAvailable() {
-        guard hardwareRuntime.sourceKind == .intelSMC else {
+        guard helper.usesMockHardware == false else {
             hardwareStatusSummary = "Running in mock hardware mode."
             logger.info("Using mock hardware runtime.")
             return
@@ -443,13 +443,14 @@ extension MacDashboardController {
         let safety = SafetyStatus(isEmergencyOverrideActive: false, reason: "profile applied")
         let hardwareRuntime = MacHardwareRuntime.defaultRuntime()
         let logger = FanControlLogger()
+        let helper = FanControlHelperFactory.make(runtime: hardwareRuntime, logger: logger)
         let controller = MacDashboardController(
             modelDescriptor: modelDescriptor,
             availableProfiles: [quiet, profile, performance, custom],
             activeProfile: profile,
             remoteServer: .preview,
             hardwareRuntime: hardwareRuntime,
-            helper: DirectFanControlHelper(runtime: hardwareRuntime),
+            helper: helper,
             logger: logger,
             mode: .profile,
             snapshot: snapshot,
