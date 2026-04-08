@@ -31,14 +31,16 @@ struct MacDashboardView: View {
                 MacControlLoopSection(summary: controller.controlLoopSummary)
 
                 MacHardwareSection(
-                    runtimeKind: controller.hardwareRuntime.sourceKind.rawValue,
+                    runtimeKind: controller.helper.sourceKindLabel,
                     statusSummary: controller.hardwareStatusSummary,
-                    lastError: controller.hardwareRuntime.lastHardwareError
+                    lastError: controller.helper.lastErrorDescription
                 )
 
                 MacServerSection(server: controller.remoteServer)
 
                 MacPairingSection(pairedDevices: controller.remoteServer.pairedDevices)
+
+                MacLogsSection(entries: Array(controller.logger.entries.prefix(8)))
             }
             .padding(20)
         }
@@ -48,6 +50,47 @@ struct MacDashboardView: View {
             controller.refreshFromHardwareIfAvailable()
             controller.publishPreviewTelemetry()
             controller.startControlLoop()
+        }
+    }
+}
+
+private struct MacLogsSection: View {
+    let entries: [FanControlLogger.Entry]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Runtime Logs")
+                .font(.title3.weight(.semibold))
+
+            if entries.isEmpty {
+                Text("No runtime logs yet.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(entries) { entry in
+                    HStack(alignment: .top, spacing: 10) {
+                        Text(entry.level.rawValue.uppercased())
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(color(for: entry.level))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.message)
+                            Text(entry.timestamp.formatted())
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    private func color(for level: FanControlLogger.Level) -> Color {
+        switch level {
+        case .info: return .blue
+        case .warning: return .orange
+        case .error: return .red
         }
     }
 }

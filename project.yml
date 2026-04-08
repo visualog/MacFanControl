@@ -13,6 +13,19 @@ packages:
 settings:
   base:
     SWIFT_VERSION: 6.0
+schemes:
+  MacFanControl:
+    build:
+      targets:
+        MacFanControl: all
+    run:
+      config: Debug
+  iPhoneRemote:
+    build:
+      targets:
+        iPhoneRemote: all
+    run:
+      config: Debug
 targets:
   MacFanControl:
     type: application

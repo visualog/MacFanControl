@@ -39,6 +39,10 @@
 - Enter emergency override above a critical threshold.
 - Rate-limit RPM changes to avoid oscillation.
 - Validate all custom curves server-side on the Mac.
+- Use a cadence limiter so repeated ticks cannot thrash the hardware.
+- Smooth the hottest temperature signal before fan decisions.
+- Verify fan writes with a readback step and engage fail-safe on mismatch.
+- Apply the same validation rules to local and remote profile changes.
 
 ## Current hardware status
 
@@ -49,3 +53,5 @@
   without changing the higher-level app architecture.
 - The macOS dashboard now surfaces runtime source, last hardware error, and
   control-loop status to make real-device validation safer.
+- The app now keeps runtime logs and routes hardware operations through a helper
+  boundary so the direct implementation can later be replaced by a privileged helper.

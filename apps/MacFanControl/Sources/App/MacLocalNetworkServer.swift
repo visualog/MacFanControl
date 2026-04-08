@@ -10,6 +10,7 @@ final class MacLocalNetworkServer {
     private let makeStatus: () -> DeviceStatus
     private let makeProfiles: () -> [FanProfile]
     private let applyProfile: (ProfileKind) -> ValidationResponse
+    private let validateCurve: (ApplyCurveRequest) -> ValidationResponse
 
     private var listener: NWListener?
     private var connections: [ObjectIdentifier: NWConnection] = [:]
@@ -23,13 +24,15 @@ final class MacLocalNetworkServer {
         listenPort: Int = LocalTransport.defaultPort,
         makeStatus: @escaping () -> DeviceStatus,
         makeProfiles: @escaping () -> [FanProfile],
-        applyProfile: @escaping (ProfileKind) -> ValidationResponse
+        applyProfile: @escaping (ProfileKind) -> ValidationResponse,
+        validateCurve: @escaping (ApplyCurveRequest) -> ValidationResponse
     ) {
         self.listenPort = listenPort
         self.isRunning = false
         self.makeStatus = makeStatus
         self.makeProfiles = makeProfiles
         self.applyProfile = applyProfile
+        self.validateCurve = validateCurve
     }
 
     func start() {
@@ -159,13 +162,8 @@ final class MacLocalNetworkServer {
             return .profiles(makeProfiles())
         case .applyProfile(let request):
             return .validation(applyProfile(request.profile))
-        case .validateCurve:
-            return .validation(
-                ValidationResponse(
-                    accepted: true,
-                    reason: "Curve validation is reserved for the Mac safety engine."
-                )
-            )
+        case .validateCurve(let request):
+            return .validation(validateCurve(request))
         }
     }
 

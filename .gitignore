@@ -3,3 +3,6 @@
 .build-cache
 .swift-home
 MFC.xcodeproj
+build/
+**/.swiftpm/
+**/build/
