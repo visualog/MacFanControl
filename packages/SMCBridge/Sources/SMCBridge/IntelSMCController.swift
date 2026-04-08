@@ -106,7 +106,7 @@ public protocol IntelSMCTransport: Sendable {
 }
 
 #if os(macOS)
-public final class AppleSMCTransport: IntelSMCTransport {
+public final class AppleSMCTransport: IntelSMCTransport, @unchecked Sendable {
     private let lock = NSLock()
     private var connection: io_connect_t = 0
 
@@ -213,7 +213,7 @@ public final class AppleSMCTransport: IntelSMCTransport {
     }
 }
 #else
-public final class AppleSMCTransport: IntelSMCTransport {
+public final class AppleSMCTransport: IntelSMCTransport, @unchecked Sendable {
     public init() {}
 
     public func read(key: IntelSMCKey) throws -> IntelSMCReading {

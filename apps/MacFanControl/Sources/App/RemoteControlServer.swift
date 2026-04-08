@@ -105,30 +105,32 @@ struct ServerState: Sendable, Hashable {
 }
 
 extension RemoteControlServer {
-    static let preview = RemoteControlServer(
-        configuration: .init(bonjourServiceName: LocalTransport.bonjourServiceType),
-        pairedDevices: [
-            .init(
-                id: UUID(),
-                name: "Visualog iPhone",
-                pairedAt: .now.addingTimeInterval(-86_400),
-                lastSeenAt: .now.addingTimeInterval(-45),
-                trustLevel: .trusted
-            ),
-            .init(
-                id: UUID(),
-                name: "QA iPhone",
-                pairedAt: .now.addingTimeInterval(-172_800),
-                lastSeenAt: .now.addingTimeInterval(-310),
-                trustLevel: .limited
-            ),
-        ],
-        serverState: .init(
-            isListening: true,
-            boundPort: LocalTransport.defaultPort,
-            activePairingCode: "483921",
-            lastPairingStartedAt: .now.addingTimeInterval(-20),
-            lastPublishedAt: .now.addingTimeInterval(-2)
+    static var preview: RemoteControlServer {
+        RemoteControlServer(
+            configuration: .init(bonjourServiceName: LocalTransport.bonjourServiceType),
+            pairedDevices: [
+                .init(
+                    id: UUID(),
+                    name: "Visualog iPhone",
+                    pairedAt: .now.addingTimeInterval(-86_400),
+                    lastSeenAt: .now.addingTimeInterval(-45),
+                    trustLevel: .trusted
+                ),
+                .init(
+                    id: UUID(),
+                    name: "QA iPhone",
+                    pairedAt: .now.addingTimeInterval(-172_800),
+                    lastSeenAt: .now.addingTimeInterval(-310),
+                    trustLevel: .limited
+                ),
+            ],
+            serverState: .init(
+                isListening: true,
+                boundPort: LocalTransport.defaultPort,
+                activePairingCode: "483921",
+                lastPairingStartedAt: .now.addingTimeInterval(-20),
+                lastPublishedAt: .now.addingTimeInterval(-2)
+            )
         )
-    )
+    }
 }

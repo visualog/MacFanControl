@@ -30,6 +30,12 @@ struct MacDashboardView: View {
 
                 MacControlLoopSection(summary: controller.controlLoopSummary)
 
+                MacHardwareSection(
+                    runtimeKind: controller.hardwareRuntime.sourceKind.rawValue,
+                    statusSummary: controller.hardwareStatusSummary,
+                    lastError: controller.hardwareRuntime.lastHardwareError
+                )
+
                 MacServerSection(server: controller.remoteServer)
 
                 MacPairingSection(pairedDevices: controller.remoteServer.pairedDevices)
@@ -207,6 +213,37 @@ private struct MacControlLoopSection: View {
             Text(summary)
                 .font(.body)
                 .foregroundStyle(.secondary)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 20))
+    }
+}
+
+private struct MacHardwareSection: View {
+    let runtimeKind: String
+    let statusSummary: String
+    let lastError: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Hardware Runtime")
+                .font(.title3.weight(.semibold))
+
+            HStack(spacing: 10) {
+                StatusPill(title: "Source", value: runtimeKind)
+                StatusPill(title: "Error", value: lastError == nil ? "None" : "Present")
+            }
+
+            Text(statusSummary)
+                .font(.body)
+                .foregroundStyle(.secondary)
+
+            if let lastError {
+                Text(lastError)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+            }
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)

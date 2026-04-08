@@ -47,3 +47,5 @@
   IOKit plumbing is implemented and validated on hardware.
 - The dashboard can already swap between mock and Intel-backed runtime sources
   without changing the higher-level app architecture.
+- The macOS dashboard now surfaces runtime source, last hardware error, and
+  control-loop status to make real-device validation safer.

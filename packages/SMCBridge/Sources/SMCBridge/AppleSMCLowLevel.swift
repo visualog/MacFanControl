@@ -77,7 +77,8 @@ enum AppleSMCByteCodec {
         var result = SMCKeyData()
         let count = min(data.count, MemoryLayout.size(ofValue: result.bytes))
         withUnsafeMutableBytes(of: &result.bytes) { buffer in
-            buffer.baseAddress?.assumingMemoryBound(to: UInt8.self).initialize(from: data.prefix(count), count: count)
+            let destination = buffer.bindMemory(to: UInt8.self)
+            _ = destination.initialize(fromContentsOf: data.prefix(count))
         }
         return result
     }

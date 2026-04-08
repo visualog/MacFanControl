@@ -1,9 +1,11 @@
 import Foundation
 import Observation
 import ControlCore
+import RemoteProtocol
 import SharedModels
 import SMCBridge
 
+@MainActor
 @Observable
 final class MacDashboardController {
     let modelDescriptor: MacModelDescriptor
@@ -18,6 +20,7 @@ final class MacDashboardController {
     var safetyStatus: SafetyStatus
     var lastCommandSummary: String
     var controlLoopSummary: String
+    var hardwareStatusSummary: String
 
     private var controlTask: Task<Void, Never>?
 
@@ -31,7 +34,8 @@ final class MacDashboardController {
         snapshot: SensorSnapshot,
         safetyStatus: SafetyStatus,
         lastCommandSummary: String,
-        controlLoopSummary: String
+        controlLoopSummary: String,
+        hardwareStatusSummary: String
     ) {
         self.modelDescriptor = modelDescriptor
         self.availableProfiles = availableProfiles
@@ -43,6 +47,7 @@ final class MacDashboardController {
         self.safetyStatus = safetyStatus
         self.lastCommandSummary = lastCommandSummary
         self.controlLoopSummary = controlLoopSummary
+        self.hardwareStatusSummary = hardwareStatusSummary
     }
 
     var deviceStatus: DeviceStatus {
@@ -65,15 +70,22 @@ final class MacDashboardController {
     }
 
     func refreshFromHardwareIfAvailable() {
-        guard hardwareRuntime.sourceKind == .intelSMC else { return }
+        guard hardwareRuntime.sourceKind == .intelSMC else {
+            hardwareStatusSummary = "Running in mock hardware mode."
+            return
+        }
 
         if let latestSnapshot = hardwareRuntime.loadSnapshot() {
             snapshot = latestSnapshot
+            hardwareStatusSummary = "Intel SMC snapshot read succeeded at \(latestSnapshot.timestamp.formatted())"
         }
         if let latestDescriptor = hardwareRuntime.loadDescriptor() {
             if latestDescriptor.identifier != modelDescriptor.identifier {
                 lastCommandSummary = "Hardware descriptor differs from preview model: \(latestDescriptor.identifier)"
             }
+        }
+        if let lastHardwareError = hardwareRuntime.lastHardwareError {
+            hardwareStatusSummary = "Intel SMC runtime error: \(lastHardwareError)"
         }
     }
 
@@ -82,7 +94,7 @@ final class MacDashboardController {
 
         controlTask = Task { [weak self] in
             while let self, !Task.isCancelled {
-                await self.runControlTick()
+                self.runControlTick()
                 try? await Task.sleep(for: .seconds(3))
             }
         }
@@ -119,6 +131,7 @@ final class MacDashboardController {
                 reason: hardwareRuntime.lastHardwareError ?? "snapshot unavailable"
             )
             controlLoopSummary = "Snapshot read failed. Reverting toward safe fallback."
+            hardwareStatusSummary = "Latest hardware read failed."
             _ = hardwareRuntime.revertAllFansToAuto()
             publishPreviewTelemetry()
             return
@@ -196,18 +209,21 @@ final class MacDashboardController {
             controlLoopSummary = applied
                 ? "Applied \(rpm) RPM. \(reason)"
                 : "Failed to apply \(rpm) RPM. \(hardwareRuntime.lastHardwareError ?? reason)"
+            hardwareStatusSummary = applied ? "Hardware apply succeeded." : "Hardware apply failed."
         case .revertToAuto(let reason):
             let reverted = hardwareRuntime.revertAllFansToAuto()
             mode = .systemAuto
             controlLoopSummary = reverted
                 ? "Returned fans to automatic control. \(reason)"
                 : "Failed to return fans to auto. \(hardwareRuntime.lastHardwareError ?? reason)"
+            hardwareStatusSummary = reverted ? "Hardware auto mode restore succeeded." : "Hardware auto mode restore failed."
         case .emergency(let rpm, let reason):
             let applied = hardwareRuntime.applyTargetRPM(rpm)
             mode = .emergencyOverride
             controlLoopSummary = applied
                 ? "Emergency override at \(rpm) RPM. \(reason)"
                 : "Emergency override failed. \(hardwareRuntime.lastHardwareError ?? reason)"
+            hardwareStatusSummary = applied ? "Emergency hardware apply succeeded." : "Emergency hardware apply failed."
         }
     }
 
@@ -307,7 +323,8 @@ extension MacDashboardController {
             snapshot: snapshot,
             safetyStatus: safety,
             lastCommandSummary: "Balanced profile requests 3000 RPM from CPU/GPU thermal curve.",
-            controlLoopSummary: "Control loop idle."
+            controlLoopSummary: "Control loop idle.",
+            hardwareStatusSummary: "Hardware runtime not sampled yet."
         )
         controller.bindLocalNetworkServer()
         return controller

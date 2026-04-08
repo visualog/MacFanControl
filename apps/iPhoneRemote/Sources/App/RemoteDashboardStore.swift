@@ -3,6 +3,7 @@ import Observation
 import RemoteProtocol
 import SharedModels
 
+@MainActor
 @Observable
 final class RemoteDashboardStore {
     private let client: any RemoteControlClient
@@ -112,9 +113,39 @@ extension RemoteDashboardStore {
         )
     }
 
-    static let preview = RemoteDashboardStore(
-        client: PreviewRemoteControlClient(
-            previewStatus: .init(
+    static var preview: RemoteDashboardStore {
+        RemoteDashboardStore(
+            client: PreviewRemoteControlClient(
+                previewStatus: .init(
+                    mode: .profile,
+                    activeProfile: .balanced,
+                    snapshot: .init(
+                        timestamp: .now,
+                        temperatures: [
+                            .init(name: "CPU Proximity", celsius: 77.9),
+                            .init(name: "GPU Diode", celsius: 73.4),
+                            .init(name: "Palm Rest", celsius: 32.8),
+                        ],
+                        fans: [
+                            .init(id: 0, currentRPM: 2910, targetRPM: 3000),
+                            .init(id: 1, currentRPM: 2895, targetRPM: 3000),
+                        ],
+                        isExternalDisplayConnected: true,
+                        isClamshellMode: false
+                    ),
+                    safety: .init(isEmergencyOverrideActive: false, reason: "profile applied")
+                ),
+                previewProfiles: [
+                    .init(kind: .quiet, name: "Quiet", curve: []),
+                    .init(kind: .balanced, name: "Balanced", curve: []),
+                    .init(kind: .performance, name: "Performance", curve: []),
+                    .init(kind: .custom, name: "Custom Curve", curve: []),
+                ]
+            ),
+            selectedTab: .live,
+            deviceName: "MacBook Pro 16",
+            connectionState: "Connected on local network",
+            status: .init(
                 mode: .profile,
                 activeProfile: .balanced,
                 snapshot: .init(
@@ -133,58 +164,30 @@ extension RemoteDashboardStore {
                 ),
                 safety: .init(isEmergencyOverrideActive: false, reason: "profile applied")
             ),
-            previewProfiles: [
+            availableProfiles: [
                 .init(kind: .quiet, name: "Quiet", curve: []),
                 .init(kind: .balanced, name: "Balanced", curve: []),
                 .init(kind: .performance, name: "Performance", curve: []),
                 .init(kind: .custom, name: "Custom Curve", curve: []),
-            ]
-        ),
-        selectedTab: .live,
-        deviceName: "MacBook Pro 16",
-        connectionState: "Connected on local network",
-        status: .init(
-            mode: .profile,
-            activeProfile: .balanced,
-            snapshot: .init(
-                timestamp: .now,
-                temperatures: [
-                    .init(name: "CPU Proximity", celsius: 77.9),
-                    .init(name: "GPU Diode", celsius: 73.4),
-                    .init(name: "Palm Rest", celsius: 32.8),
-                ],
-                fans: [
-                    .init(id: 0, currentRPM: 2910, targetRPM: 3000),
-                    .init(id: 1, currentRPM: 2895, targetRPM: 3000),
-                ],
-                isExternalDisplayConnected: true,
-                isClamshellMode: false
-            ),
-            safety: .init(isEmergencyOverrideActive: false, reason: "profile applied")
-        ),
-        availableProfiles: [
-            .init(kind: .quiet, name: "Quiet", curve: []),
-            .init(kind: .balanced, name: "Balanced", curve: []),
-            .init(kind: .performance, name: "Performance", curve: []),
-            .init(kind: .custom, name: "Custom Curve", curve: []),
-        ],
-        selectedProfile: .balanced,
-        validationMessage: "Remote requests are validated on the Mac before they are applied.",
-        discoveredDevices: [
-            .init(
+            ],
+            selectedProfile: .balanced,
+            validationMessage: "Remote requests are validated on the Mac before they are applied.",
+            discoveredDevices: [
+                .init(
+                    id: UUID(),
+                    name: "MacBook Pro 16",
+                    host: "mfc.local",
+                    port: 48484,
+                    transport: "ws"
+                )
+            ],
+            connectedDevice: .init(
                 id: UUID(),
                 name: "MacBook Pro 16",
                 host: "mfc.local",
                 port: 48484,
                 transport: "ws"
             )
-        ],
-        connectedDevice: .init(
-            id: UUID(),
-            name: "MacBook Pro 16",
-            host: "mfc.local",
-            port: 48484,
-            transport: "ws"
         )
-    )
+    }
 }

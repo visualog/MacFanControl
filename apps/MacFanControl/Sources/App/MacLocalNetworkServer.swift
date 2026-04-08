@@ -7,9 +7,9 @@ import SharedModels
 @MainActor
 @Observable
 final class MacLocalNetworkServer {
-    private let makeStatus: @Sendable () -> DeviceStatus
-    private let makeProfiles: @Sendable () -> [FanProfile]
-    private let applyProfile: @Sendable (ProfileKind) -> ValidationResponse
+    private let makeStatus: () -> DeviceStatus
+    private let makeProfiles: () -> [FanProfile]
+    private let applyProfile: (ProfileKind) -> ValidationResponse
 
     private var listener: NWListener?
     private var connections: [ObjectIdentifier: NWConnection] = [:]
@@ -21,9 +21,9 @@ final class MacLocalNetworkServer {
 
     init(
         listenPort: Int = LocalTransport.defaultPort,
-        makeStatus: @escaping @Sendable () -> DeviceStatus,
-        makeProfiles: @escaping @Sendable () -> [FanProfile],
-        applyProfile: @escaping @Sendable (ProfileKind) -> ValidationResponse
+        makeStatus: @escaping () -> DeviceStatus,
+        makeProfiles: @escaping () -> [FanProfile],
+        applyProfile: @escaping (ProfileKind) -> ValidationResponse
     ) {
         self.listenPort = listenPort
         self.isRunning = false
@@ -148,7 +148,7 @@ final class MacLocalNetworkServer {
 
     private func splitFrames(_ data: Data) -> [Data] {
         let delimiter = UInt8(ascii: "\n")
-        return data.split(separator: delimiter).map(Data.init)
+        return Array(data).split(separator: delimiter).map { Data($0) }
     }
 
     private func handle(_ command: RemoteCommand) -> RemoteResponse {

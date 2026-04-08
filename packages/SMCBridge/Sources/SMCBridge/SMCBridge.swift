@@ -38,7 +38,7 @@ public enum SMCBridgeError: Error, Sendable {
     case notOpen
 }
 
-public final class MockSMCController: SMCControlling {
+public final class MockSMCController: SMCControlling, @unchecked Sendable {
     private var snapshot: SensorSnapshot
     private let descriptor: MacModelDescriptor
 
